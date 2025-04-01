@@ -2,14 +2,395 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8" />
-	<title>Title</title>
+	<title>LATAM Supermarket Analytics Dashboard</title>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<style>
+		:root {
+			--primary-blue: #1a237e;
+			--secondary-orange: #ff6f00;
+			--light-blue: #e8eaf6;
+			--light-orange: #fff3e0;
+			--dark-blue: #0d47a1;
+			--dark-orange: #e65100;
+			--text-light: #ffffff;
+			--text-dark: #333333;
+			--bg-light: #ffffff;
+			--bg-dark: #1a1a1a;
+		}
+
+		[data-theme="dark"] {
+			--primary-blue: #0d47a1;
+			--secondary-orange: #e65100;
+			--light-blue: #1a237e;
+			--light-orange: #ff6f00;
+			--text-light: #ffffff;
+			--text-dark: #ffffff;
+			--bg-light: #1a1a1a;
+			--bg-dark: #0d0d0d;
+		}
+
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+			font-family: 'Segoe UI', Arial, sans-serif;
+		}
+
+		body {
+			background-color: var(--bg-light);
+			color: var(--text-dark);
+		}
+
+		.masthead {
+			background-color: var(--primary-blue);
+			padding: 1rem 2rem;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			color: var(--text-light);
+		}
+
+		.logo {
+			height: 40px;
+		}
+
+		.user-section {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+		}
+
+		.theme-switch {
+			position: relative;
+			display: inline-block;
+			width: 60px;
+			height: 34px;
+		}
+
+		.theme-switch input {
+			opacity: 0;
+			width: 0;
+			height: 0;
+		}
+
+		.slider {
+			position: absolute;
+			cursor: pointer;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: var(--secondary-orange);
+			transition: .4s;
+			border-radius: 34px;
+		}
+
+		.slider:before {
+			position: absolute;
+			content: "";
+			height: 26px;
+			width: 26px;
+			left: 4px;
+			bottom: 4px;
+			background-color: white;
+			transition: .4s;
+			border-radius: 50%;
+		}
+
+		input:checked + .slider {
+			background-color: var(--primary-blue);
+		}
+
+		input:checked + .slider:before {
+			transform: translateX(26px);
+		}
+
+		.dashboard-container {
+			display: flex;
+			padding: 2rem;
+			gap: 2rem;
+		}
+
+		.main-content {
+			flex: 2;
+		}
+
+		.chat-section {
+			flex: 1;
+			background-color: var(--light-blue);
+			padding: 1rem;
+			border-radius: 8px;
+		}
+
+		.filters {
+			display: flex;
+			gap: 1rem;
+			margin-bottom: 2rem;
+		}
+
+		select {
+			padding: 0.5rem;
+			border: 1px solid var(--primary-blue);
+			border-radius: 4px;
+			background-color: var(--bg-light);
+			color: var(--text-dark);
+		}
+
+		.chart-container {
+			background-color: var(--bg-light);
+			padding: 1rem;
+			border-radius: 8px;
+			margin-bottom: 2rem;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+		}
+
+		.chat-messages {
+			height: 400px;
+			overflow-y: auto;
+			margin-bottom: 1rem;
+			padding: 1rem;
+			background-color: var(--bg-light);
+			border-radius: 4px;
+		}
+
+		.chat-input {
+			display: flex;
+			gap: 0.5rem;
+		}
+
+		input[type="text"] {
+			flex: 1;
+			padding: 0.5rem;
+			border: 1px solid var(--primary-blue);
+			border-radius: 4px;
+			background-color: var(--bg-light);
+			color: var(--text-dark);
+		}
+
+		button {
+			padding: 0.5rem 1rem;
+			background-color: var(--primary-blue);
+			color: var(--text-light);
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+		}
+
+		button:hover {
+			background-color: var(--dark-blue);
+		}
+
+		.message {
+			margin-bottom: 1rem;
+			padding: 0.5rem;
+			border-radius: 4px;
+		}
+
+		.user-message {
+			background-color: var(--light-orange);
+			margin-left: 20%;
+		}
+
+		.bot-message {
+			background-color: var(--light-blue);
+			margin-right: 20%;
+		}
+	</style>
 </head>
 <body>
+	<div class="masthead">
+		<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Pepsi_logo_2014.svg/2560px-Pepsi_logo_2014.svg.png" alt="PepsiCo Logo" class="logo">
+		<div class="user-section">
+			<label class="theme-switch">
+				<input type="checkbox" id="theme-toggle">
+				<span class="slider"></span>
+			</label>
+			<span>John Smith</span>
+		</div>
+	</div>
 
-	<p>
-		David Giorgi
-	</p>	
+	<div class="dashboard-container">
+		<div class="main-content">
+			<div class="filters">
+				<select id="supermarket-filter">
+					<option value="BRA-Carrefour">BRA-Carrefour</option>
+				</select>
+				<select id="week-filter">
+					<option value="2025-02-01">Week 1 (Feb 1-7)</option>
+					<option value="2025-02-08">Week 2 (Feb 8-14)</option>
+					<option value="2025-02-15">Week 3 (Feb 15-21)</option>
+					<option value="2025-02-22">Week 4 (Feb 22-28)</option>
+				</select>
+				<select id="product-filter">
+					<option value="all">All Products</option>
+					<option value="fini">Fini Products</option>
+					<option value="oreo">Oreo Products</option>
+					<option value="halls">Halls Products</option>
+				</select>
+			</div>
 
+			<div class="chart-container">
+				<canvas id="salesChart"></canvas>
+			</div>
+
+			<div class="chart-container">
+				<canvas id="trendChart"></canvas>
+			</div>
+		</div>
+
+		<div class="chat-section">
+			<h3>Data Insights Assistant</h3>
+			<div class="chat-messages" id="chat-messages">
+				<div class="message bot-message">
+					Hello! I can help you analyze the supermarket data. What would you like to know?
+				</div>
+			</div>
+			<div class="chat-input">
+				<input type="text" id="chat-input" placeholder="Ask about the data...">
+				<button onclick="sendMessage()">Send</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// Sample data
+		const productData = {
+			"BRA-Carrefour": {
+				"2025-02-01": {
+					"Bala de Gelatina Beijos de Morango Fini 100g": { sales: 150, price: 4.99 },
+					"Bala de Gelatina Dentadura Fini 100g": { sales: 120, price: 4.99 },
+					"Bala de Gelatina Minhocas Fini 100g": { sales: 180, price: 4.99 },
+					"Biscoito Chocolate com Recheio de Baunilha Oreo Pacote 90g": { sales: 200, price: 5.99 },
+					"Biscoito Chocolate com Recheio de Chocolate Oreo Pacote 90g": { sales: 220, price: 5.99 },
+					"Biscoito Recheado Sabor Chocolate Pacote Passatempo 130g": { sales: 160, price: 4.49 },
+					"Biscoito Recheado Sabor Chocolate Pacote Trakinas 126g": { sales: 140, price: 4.49 },
+					"Biscoito Roladinho Sabor Goiabinha Piraquê 75g": { sales: 90, price: 3.99 },
+					"Drops de Balas Sabor Extra Forte Halls 27,5g": { sales: 110, price: 3.49 },
+					"Halls Sabor Cereja 28g": { sales: 95, price: 3.49 },
+					"Halls Sabor Melancia 28g": { sales: 85, price: 3.49 },
+					"Halls Sabor Menta 28g": { sales: 100, price: 3.49 },
+					"Halls Sabor Morango 28g": { sales: 90, price: 3.49 }
+				}
+			}
+		};
+
+		// Theme toggle functionality
+		const themeToggle = document.getElementById('theme-toggle');
+		themeToggle.addEventListener('change', () => {
+			document.body.setAttribute('data-theme', themeToggle.checked ? 'dark' : 'light');
+		});
+
+		// Chart initialization
+		let salesChart, trendChart;
+
+		function initializeCharts() {
+			const ctx1 = document.getElementById('salesChart').getContext('2d');
+			const ctx2 = document.getElementById('trendChart').getContext('2d');
+
+			salesChart = new Chart(ctx1, {
+				type: 'bar',
+				data: {
+					labels: Object.keys(productData["BRA-Carrefour"]["2025-02-01"]),
+					datasets: [{
+						label: 'Sales Volume',
+						data: Object.values(productData["BRA-Carrefour"]["2025-02-01"]).map(item => item.sales),
+						backgroundColor: 'rgba(26, 35, 126, 0.7)',
+						borderColor: 'rgba(26, 35, 126, 1)',
+						borderWidth: 1
+					}]
+				},
+				options: {
+					responsive: true,
+					plugins: {
+						title: {
+							display: true,
+							text: 'Product Sales Volume'
+						}
+					},
+					scales: {
+						y: {
+							beginAtZero: true
+						}
+					}
+				}
+			});
+
+			trendChart = new Chart(ctx2, {
+				type: 'line',
+				data: {
+					labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+					datasets: [{
+						label: 'Total Sales Trend',
+						data: [1500, 1600, 1550, 1650],
+						borderColor: 'rgba(255, 111, 0, 1)',
+						tension: 0.1
+					}]
+				},
+				options: {
+					responsive: true,
+					plugins: {
+						title: {
+							display: true,
+							text: 'Weekly Sales Trend'
+						}
+					}
+				}
+			});
+		}
+
+		// Filter functionality
+		function updateCharts() {
+			const supermarket = document.getElementById('supermarket-filter').value;
+			const week = document.getElementById('week-filter').value;
+			const productType = document.getElementById('product-filter').value;
+
+			// Update charts based on filters
+			// This is a simplified version - in a real application, you would fetch new data
+			salesChart.update();
+			trendChart.update();
+		}
+
+		// Chat functionality
+		function sendMessage() {
+			const input = document.getElementById('chat-input');
+			const message = input.value.trim();
+			
+			if (message) {
+				addMessage(message, 'user-message');
+				input.value = '';
+				
+				// Simulate bot response
+				setTimeout(() => {
+					addMessage('I can help you analyze that data. What specific insights are you looking for?', 'bot-message');
+				}, 1000);
+			}
+		}
+
+		function addMessage(text, className) {
+			const messagesDiv = document.getElementById('chat-messages');
+			const messageDiv = document.createElement('div');
+			messageDiv.className = `message ${className}`;
+			messageDiv.textContent = text;
+			messagesDiv.appendChild(messageDiv);
+			messagesDiv.scrollTop = messagesDiv.scrollHeight;
+		}
+
+		// Initialize everything when the page loads
+		document.addEventListener('DOMContentLoaded', () => {
+			initializeCharts();
+			
+			// Add event listeners to filters
+			document.getElementById('supermarket-filter').addEventListener('change', updateCharts);
+			document.getElementById('week-filter').addEventListener('change', updateCharts);
+			document.getElementById('product-filter').addEventListener('change', updateCharts);
+			
+			// Add enter key support for chat
+			document.getElementById('chat-input').addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') {
+					sendMessage();
+				}
+			});
+		});
+	</script>
 </body>
-
 </html>
